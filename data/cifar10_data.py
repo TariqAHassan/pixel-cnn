@@ -122,4 +122,6 @@ class DataLoader(object):
         else:
             return x
 
-    next = __next__  # Python 2 compatibility (https://stackoverflow.com/questions/29578469/how-to-make-an-object-both-a-python2-and-python3-iterator)
+    next = __next__
+    # Python 2 compatibility
+    # See: (https://stackoverflow.com/questions/29578469/how-to-make-an-object-both-a-python2-and-python3-iterator)

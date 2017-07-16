@@ -12,13 +12,13 @@ def int_shape(x):
 
 
 def concat_elu(x):
-    """ like concatenated ReLU (http://arxiv.org/abs/1603.05201), but then with ELU """
+    """Like concatenated ReLU (http://arxiv.org/abs/1603.05201), but then with ELU """
     axis = len(x.get_shape()) - 1
     return tf.nn.elu(tf.concat([x, -x], axis))
 
 
 def log_sum_exp(x):
-    """ numerically stable log_sum_exp implementation that prevents overflow """
+    """Numerically stable log_sum_exp implementation that prevents overflow """
     axis = len(x.get_shape()) - 1
     m = tf.reduce_max(x, axis)
     m2 = tf.reduce_max(x, axis, keep_dims=True)
@@ -26,14 +26,14 @@ def log_sum_exp(x):
 
 
 def log_prob_from_logits(x):
-    """ numerically stable log_softmax implementation that prevents overflow """
+    """Numerically stable log_softmax implementation that prevents overflow """
     axis = len(x.get_shape()) - 1
     m = tf.reduce_max(x, axis, keep_dims=True)
     return x - m - tf.log(tf.reduce_sum(tf.exp(x - m), axis, keep_dims=True))
 
 
 def discretized_mix_logistic_loss(x, l, sum_all=True):
-    """ log-likelihood for mixture of discretized logistics, assumes the data has been rescaled to [-1,1] interval """
+    """Log-likelihood for mixture of discretized logistics, assumes the data has been rescaled to [-1,1] interval """
     xs = int_shape(
         x)  # true image (i.e. labels) to regress to, e.g. (B,32,32,3)
     ls = int_shape(l)  # predicted distribution, e.g. (B,32,32,100)
@@ -72,12 +72,15 @@ def discretized_mix_logistic_loss(x, l, sum_all=True):
     # now select the right output: left edge case, right edge case, normal
     # case, extremely low prob case (doesn't actually happen for us)
 
-    # this is what we are really doing, but using the robust version below for extreme cases in other applications and to avoid NaN issue with tf.select()
+    # this is what we are really doing, but using the robust version below for extreme cases in other applications
+    # and to avoid NaN issue with tf.select()
     # log_probs = tf.select(x < -0.999, log_cdf_plus, tf.select(x > 0.999, log_one_minus_cdf_min, tf.log(cdf_delta)))
 
     # robust version, that still works if probabilities are below 1e-5 (which never happens in our code)
-    # tensorflow backpropagates through tf.select() by multiplying with zero instead of selecting: this requires use to use some ugly tricks to avoid potential NaNs
-    # the 1e-12 in tf.maximum(cdf_delta, 1e-12) is never actually used as output, it's purely there to get around the tf.select() gradient issue
+    # tensorflow backpropagates through tf.select() by multiplying with zero instead of selecting: this
+    # requires use to use some ugly tricks to avoid potential NaNs
+    # the 1e-12 in tf.maximum(cdf_delta, 1e-12) is never actually used as output, it's purely there to get 
+    # around the tf.select() gradient issue
     # if the probability on a sub-pixel is below 1e-5, we use an approximation
     # based on the assumption that the log-density is constant in the bin of
     # the observed sub-pixel value
@@ -122,7 +125,7 @@ def sample_from_discretized_mix_logistic(l, nr_mix):
 
 
 def get_var_maybe_avg(var_name, ema, **kwargs):
-    ''' utility for retrieving polyak averaged params '''
+    """Utility for retrieving polyak averaged params """
     v = tf.get_variable(var_name, **kwargs)
     if ema is not None:
         v = ema.average(v)
@@ -130,7 +133,7 @@ def get_var_maybe_avg(var_name, ema, **kwargs):
 
 
 def get_vars_maybe_avg(var_names, ema, **kwargs):
-    ''' utility for retrieving polyak averaged params '''
+    """Utility for retrieving polyak averaged params """
     vars = []
     for vn in var_names:
         vars.append(get_var_maybe_avg(vn, ema, **kwargs))
@@ -138,7 +141,7 @@ def get_vars_maybe_avg(var_names, ema, **kwargs):
 
 
 def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):
-    ''' Adam optimizer '''
+    """Adam optimizer """
     updates = []
     if type(cost_or_grads) is not list:
         grads = tf.gradients(cost_or_grads, params)
@@ -165,7 +168,7 @@ def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):
 
 
 def get_name(layer_name, counters):
-    ''' utlity for keeping track of layer names '''
+    """Utility for keeping track of layer names """
     if not layer_name in counters:
         counters[layer_name] = 0
     name = layer_name + '_' + str(counters[layer_name])
@@ -174,8 +177,9 @@ def get_name(layer_name, counters):
 
 
 @add_arg_scope
-def dense(x, num_units, nonlinearity=None, init_scale=1., counters={}, init=False, ema=None, **kwargs):
-    ''' fully connected layer '''
+def dense(x, num_units, nonlinearity=None, init_scale=1.,
+          counters={}, init=False, ema=None, **kwargs):
+    """Fully connected layer """
     name = get_name('dense', counters)
     with tf.variable_scope(name):
         if init:
@@ -214,9 +218,10 @@ def dense(x, num_units, nonlinearity=None, init_scale=1., counters={}, init=Fals
 
 
 @add_arg_scope
-def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1., counters={},
+def conv2d(x, num_filters, filter_size=(3, 3), stride=(1, 1),
+           pad='SAME', nonlinearity=None, init_scale=1., counters={},
            init=False, ema=None, **kwargs):
-    ''' convolutional layer '''
+    """Convolutional layer """
     name = get_name('conv2d', counters)
     with tf.variable_scope(name):
         if init:
@@ -255,9 +260,10 @@ def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlin
 
 
 @add_arg_scope
-def deconv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1.,
+def deconv2d(x, num_filters, filter_size=(3, 3), stride=(1, 1), pad='SAME',
+             nonlinearity=None, init_scale=1.,
              counters={}, init=False, ema=None, **kwargs):
-    ''' transposed convolutional layer '''
+    """Transposed convolutional layer """
     name = get_name('deconv2d', counters)
     xs = int_shape(x)
     if pad == 'SAME':
@@ -314,7 +320,10 @@ def nin(x, num_units, **kwargs):
     return tf.reshape(x, s[:-1] + [num_units])
 
 
-''' meta-layer consisting of multiple base layers '''
+# -----------------------------------------------------------------------------
+# Meta-layer consisting of multiple base layers
+# -----------------------------------------------------------------------------
+
 
 
 @add_arg_scope
@@ -346,8 +355,10 @@ def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu, conv=conv2d, init=F
     return x + c3
 
 
-''' utilities for shifting the image around, efficient alternative to masking convolutions '''
-
+# -----------------------------------------------------------------------------
+# Utilities for shifting the image around,
+# efficient alternative to masking convolutions
+# -----------------------------------------------------------------------------
 
 def down_shift(x):
     xs = int_shape(x)
@@ -360,14 +371,14 @@ def right_shift(x):
 
 
 @add_arg_scope
-def down_shifted_conv2d(x, num_filters, filter_size=[2, 3], stride=[1, 1], **kwargs):
+def down_shifted_conv2d(x, num_filters, filter_size=(2, 3), stride=(1, 1), **kwargs):
     x = tf.pad(x, [[0, 0], [filter_size[0] - 1, 0],
                    [int((filter_size[1] - 1) / 2), int((filter_size[1] - 1) / 2)], [0, 0]])
     return conv2d(x, num_filters, filter_size=filter_size, pad='VALID', stride=stride, **kwargs)
 
 
 @add_arg_scope
-def down_shifted_deconv2d(x, num_filters, filter_size=[2, 3], stride=[1, 1], **kwargs):
+def down_shifted_deconv2d(x, num_filters, filter_size=(2, 3), stride=(1, 1), **kwargs):
     x = deconv2d(x, num_filters, filter_size=filter_size,
                  pad='VALID', stride=stride, **kwargs)
     xs = int_shape(x)
@@ -375,14 +386,14 @@ def down_shifted_deconv2d(x, num_filters, filter_size=[2, 3], stride=[1, 1], **k
 
 
 @add_arg_scope
-def down_right_shifted_conv2d(x, num_filters, filter_size=[2, 2], stride=[1, 1], **kwargs):
+def down_right_shifted_conv2d(x, num_filters, filter_size=(2, 2), stride=(1, 1), **kwargs):
     x = tf.pad(x, [[0, 0], [filter_size[0] - 1, 0],
                    [filter_size[1] - 1, 0], [0, 0]])
     return conv2d(x, num_filters, filter_size=filter_size, pad='VALID', stride=stride, **kwargs)
 
 
 @add_arg_scope
-def down_right_shifted_deconv2d(x, num_filters, filter_size=[2, 2], stride=[1, 1], **kwargs):
+def down_right_shifted_deconv2d(x, num_filters, filter_size=(2, 2), stride=(1, 1), **kwargs):
     x = deconv2d(x, num_filters, filter_size=filter_size,
                  pad='VALID', stride=stride, **kwargs)
     xs = int_shape(x)

@@ -18,8 +18,8 @@ def model_spec(x, h=None, init=False, ema=None, dropout_p=0.5, nr_resnet=5, nr_f
     """
 
     counters = {}
-    with arg_scope([nn.conv2d, nn.deconv2d, nn.gated_resnet, nn.dense], counters=counters, init=init, ema=ema,
-                   dropout_p=dropout_p):
+    with arg_scope([nn.conv2d, nn.deconv2d, nn.gated_resnet, nn.dense],
+                   counters=counters, init=init, ema=ema, dropout_p=dropout_p):
 
         # parse resnet nonlinearity argument
         if resnet_nonlinearity == 'concat_elu':
@@ -41,8 +41,7 @@ def model_spec(x, h=None, init=False, ema=None, dropout_p=0.5, nr_resnet=5, nr_f
             u_list = [nn.down_shift(nn.down_shifted_conv2d(
                 x_pad, num_filters=nr_filters, filter_size=[2, 3]))]  # stream for pixels above
             ul_list = [nn.down_shift(nn.down_shifted_conv2d(x_pad, num_filters=nr_filters, filter_size=[1, 3])) +
-                       nn.right_shift(nn.down_right_shifted_conv2d(x_pad, num_filters=nr_filters, filter_size=[2,
-                                                                                                               1]))]  # stream for up and to the left
+                       nn.right_shift(nn.down_right_shifted_conv2d(x_pad, num_filters=nr_filters, filter_size=[2, 1]))]  # stream for up and to the left
 
             for rep in range(nr_resnet):
                 u_list.append(nn.gated_resnet(

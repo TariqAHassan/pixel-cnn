@@ -24,10 +24,10 @@ def img_stretch(img):
 
 def img_tile(imgs, aspect_ratio=1.0, tile_shape=None, border=1,
              border_color=0, stretch=False):
-    ''' Tile images in a grid.
+    """ Tile images in a grid.
     If tile_shape is provided only as many images as specified in tile_shape
     will be included in the output.
-    '''
+    """
 
     # Prepare images
     if stretch:
