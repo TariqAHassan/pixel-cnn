@@ -22,8 +22,10 @@ import data.cifar10_data as cifar10_data
 import data.imagenet_data as imagenet_data
 
 # -----------------------------------------------------------------------------
+
 parser = argparse.ArgumentParser()
-# data I/O
+
+# Data I/O ---
 parser.add_argument('-i', '--data_dir', type=str,
                     default='/tmp/pxpp/data', help='Location for the dataset')
 parser.add_argument('-o', '--save_dir', type=str, default='/tmp/pxpp/save',
@@ -34,7 +36,7 @@ parser.add_argument('-t', '--save_interval', type=int, default=20,
                     help='Every how many epochs to write checkpoint/samples?')
 parser.add_argument('-r', '--load_params', dest='load_params', action='store_true',
                     help='Restore training from previous model checkpoint?')
-# model
+# Model ---
 parser.add_argument('-q', '--nr_resnet', type=int, default=5,
                     help='Number of residual blocks per stage of the model')
 parser.add_argument('-n', '--nr_filters', type=int, default=160,
@@ -45,7 +47,8 @@ parser.add_argument('-z', '--resnet_nonlinearity', type=str, default='concat_elu
                     help='Which nonlinearity to use in the ResNet layers. One of "concat_elu", "elu", "relu" ')
 parser.add_argument('-c', '--class_conditional', dest='class_conditional',
                     action='store_true', help='Condition generative model on labels?')
-# optimization
+
+# Optimization ---
 parser.add_argument('-l', '--learning_rate', type=float,
                     default=0.001, help='Base learning rate')
 parser.add_argument('-e', '--lr_decay', type=float, default=0.999995,
@@ -77,7 +80,8 @@ tf.set_random_seed(args.seed)
 
 # initialize data loaders for train/test splits
 if args.data_set == 'imagenet' and args.class_conditional:
-    raise("We currently don't have labels for the small imagenet data set")
+    raise ValueError("We currently don't have labels for the small imagenet data set")
+
 DataLoader = {'cifar': cifar10_data.DataLoader,
               'imagenet': imagenet_data.DataLoader}[args.data_set]
 train_data = DataLoader(args.data_dir, 'train', args.batch_size * args.nr_gpu,
