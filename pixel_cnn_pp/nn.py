@@ -270,8 +270,8 @@ def deconv2d(x, num_filters, filter_size=(3, 3), stride=(1, 1), pad='SAME',
         target_shape = [xs[0], xs[1] * stride[0],
                         xs[2] * stride[1], num_filters]
     else:
-        target_shape = [xs[0], xs[1] * stride[0] + filter_size[0] -
-                        1, xs[2] * stride[1] + filter_size[1] - 1, num_filters]
+        target_shape = [xs[0], xs[1] * stride[0] + filter_size[0] - 1,
+                        xs[2] * stride[1] + filter_size[1] - 1, num_filters]
     with tf.variable_scope(name):
         if init:
             # data based initialization of parameters
