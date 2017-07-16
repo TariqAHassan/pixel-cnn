@@ -275,8 +275,8 @@ def deconv2d(x, num_filters, filter_size=(3, 3), stride=(1, 1), pad='SAME',
     with tf.variable_scope(name):
         if init:
             # data based initialization of parameters
-            V = tf.get_variable('V', filter_size + [num_filters, int(x.get_shape(
-            )[-1])], tf.float32, tf.random_normal_initializer(0, 0.05), trainable=True)
+            V = tf.get_variable('V', filter_size + [int(x.get_shape()[-1]), num_filters],
+                                tf.float32, tf.random_normal_initializer(0, 0.05), trainable=True)
             V_norm = tf.nn.l2_normalize(V.initialized_value(), [0, 1, 3])
             x_init = tf.nn.conv2d_transpose(x, V_norm, target_shape, [
                 1] + stride + [1], padding=pad)
