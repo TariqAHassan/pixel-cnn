@@ -7,7 +7,8 @@ from tensorflow.contrib.framework.python.ops import arg_scope
 import pixel_cnn_pp.nn as nn
 
 
-def model_spec(x, h=None, init=False, ema=None, dropout_p=0.5, nr_resnet=5, nr_filters=160, nr_logistic_mix=10,
+def model_spec(x, h=None, init=False, ema=None, dropout_p=0.5,
+               nr_resnet=5, nr_filters=160, nr_logistic_mix=10,
                resnet_nonlinearity='concat_elu'):
     """
     We receive a Tensor x of shape (N,H,W,D1) (e.g. (12,32,32,3)) and produce
