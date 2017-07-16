@@ -52,7 +52,7 @@ def discretized_mix_logistic_loss(x, l, sum_all=True):
     m3 = tf.reshape(means[:, :, :, 2, :] + coeffs[:, :, :, 1, :] * x[:, :, :, 0, :] +
                     coeffs[:, :, :, 2, :] * x[:, :, :, 1, :], [xs[0], xs[1], xs[2], 1, nr_mix])
     means = tf.concat([tf.reshape(means[:, :, :, 0, :], [
-                      xs[0], xs[1], xs[2], 1, nr_mix]), m2, m3], 3)
+        xs[0], xs[1], xs[2], 1, nr_mix]), m2, m3], 3)
     centered_x = x - means
     inv_stdv = tf.exp(-log_scales)
     plus_in = inv_stdv * (centered_x + 1. / 255.)
@@ -82,7 +82,9 @@ def discretized_mix_logistic_loss(x, l, sum_all=True):
     # based on the assumption that the log-density is constant in the bin of
     # the observed sub-pixel value
     log_probs = tf.where(x < -0.999, log_cdf_plus, tf.where(x > 0.999, log_one_minus_cdf_min,
-                                                            tf.where(cdf_delta > 1e-5, tf.log(tf.maximum(cdf_delta, 1e-12)), log_pdf_mid - np.log(127.5))))
+                                                            tf.where(cdf_delta > 1e-5,
+                                                                     tf.log(tf.maximum(cdf_delta, 1e-12)),
+                                                                     log_pdf_mid - np.log(127.5))))
 
     log_probs = tf.reduce_sum(log_probs, 3) + log_prob_from_logits(logit_probs)
     if sum_all:
@@ -179,7 +181,8 @@ def dense(x, num_units, nonlinearity=None, init_scale=1., counters={}, init=Fals
         if init:
             # data based initialization of parameters
             V = tf.get_variable('V', [int(x.get_shape()[
-                                1]), num_units], tf.float32, tf.random_normal_initializer(0, 0.05), trainable=True)
+                                              1]), num_units], tf.float32, tf.random_normal_initializer(0, 0.05),
+                                trainable=True)
             V_norm = tf.nn.l2_normalize(V.initialized_value(), [0])
             x_init = tf.matmul(x, V_norm)
             m_init, v_init = tf.nn.moments(x_init, [0])
@@ -211,7 +214,8 @@ def dense(x, num_units, nonlinearity=None, init_scale=1., counters={}, init=Fals
 
 
 @add_arg_scope
-def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1., counters={}, init=False, ema=None, **kwargs):
+def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1., counters={},
+           init=False, ema=None, **kwargs):
     ''' convolutional layer '''
     name = get_name('conv2d', counters)
     with tf.variable_scope(name):
@@ -228,7 +232,7 @@ def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlin
             b = tf.get_variable('b', dtype=tf.float32,
                                 initializer=-m_init * scale_init, trainable=True)
             x_init = tf.reshape(scale_init, [
-                                1, 1, 1, num_filters]) * (x_init - tf.reshape(m_init, [1, 1, 1, num_filters]))
+                1, 1, 1, num_filters]) * (x_init - tf.reshape(m_init, [1, 1, 1, num_filters]))
             if nonlinearity is not None:
                 x_init = nonlinearity(x_init)
             return x_init
@@ -251,7 +255,8 @@ def conv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlin
 
 
 @add_arg_scope
-def deconv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1., counters={}, init=False, ema=None, **kwargs):
+def deconv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1.,
+             counters={}, init=False, ema=None, **kwargs):
     ''' transposed convolutional layer '''
     name = get_name('deconv2d', counters)
     xs = int_shape(x)
@@ -268,7 +273,7 @@ def deconv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonl
             )[-1])], tf.float32, tf.random_normal_initializer(0, 0.05), trainable=True)
             V_norm = tf.nn.l2_normalize(V.initialized_value(), [0, 1, 3])
             x_init = tf.nn.conv2d_transpose(x, V_norm, target_shape, [
-                                            1] + stride + [1], padding=pad)
+                1] + stride + [1], padding=pad)
             m_init, v_init = tf.nn.moments(x_init, [0, 1, 2])
             scale_init = init_scale / tf.sqrt(v_init + 1e-8)
             g = tf.get_variable('g', dtype=tf.float32,
@@ -276,7 +281,7 @@ def deconv2d(x, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonl
             b = tf.get_variable('b', dtype=tf.float32,
                                 initializer=-m_init * scale_init, trainable=True)
             x_init = tf.reshape(scale_init, [
-                                1, 1, 1, num_filters]) * (x_init - tf.reshape(m_init, [1, 1, 1, num_filters]))
+                1, 1, 1, num_filters]) * (x_init - tf.reshape(m_init, [1, 1, 1, num_filters]))
             if nonlinearity is not None:
                 x_init = nonlinearity(x_init)
             return x_init
@@ -308,11 +313,13 @@ def nin(x, num_units, **kwargs):
     x = dense(x, num_units, **kwargs)
     return tf.reshape(x, s[:-1] + [num_units])
 
+
 ''' meta-layer consisting of multiple base layers '''
 
 
 @add_arg_scope
-def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu, conv=conv2d, init=False, counters={}, ema=None, dropout_p=0., **kwargs):
+def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu, conv=conv2d, init=False, counters={}, ema=None,
+                 dropout_p=0., **kwargs):
     xs = int_shape(x)
     num_filters = xs[-1]
 
@@ -337,6 +344,7 @@ def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu, conv=conv2d, init=F
     a, b = tf.split(c2, 2, 3)
     c3 = a * tf.nn.sigmoid(b)
     return x + c3
+
 
 ''' utilities for shifting the image around, efficient alternative to masking convolutions '''
 

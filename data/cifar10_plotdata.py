@@ -23,14 +23,13 @@ for i in range(trainx.shape[0]):
     if np.alltrue(np.asarray([len(_ids) >= 10 for _ids in ids])):
         break
 
-images = np.zeros((10*10,32,32,3),dtype='uint8')
+images = np.zeros((10 * 10, 32, 32, 3), dtype='uint8')
 for i in range(len(ids)):
     for j in range(len(ids[i])):
-        images[10*j+i] = trainx[ids[i][j]].transpose([1,2,0])
+        images[10 * j + i] = trainx[ids[i][j]].transpose([1, 2, 0])
 print(ids)
 
 img_tile = plotting.img_tile(images, aspect_ratio=1.0, border_color=1.0, stretch=True)
 img = plotting.plot_img(img_tile, title=args.plot_title if args.plot_title != 'None' else None)
 plotting.plt.savefig(args.save_dir + '/cifar10_orig_images.png')
 plotting.plt.close('all')
-
