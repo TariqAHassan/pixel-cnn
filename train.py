@@ -26,52 +26,37 @@ import data.imagenet_data as imagenet_data
 parser = argparse.ArgumentParser()
 
 # Data I/O ---
-parser.add_argument('-i', '--data_dir', type=str,
-                    default='/tmp/pxpp/data', help='Location for the dataset')
-parser.add_argument('-o', '--save_dir', type=str, default='/tmp/pxpp/save',
-                    help='Location for parameter checkpoints and samples')
-parser.add_argument('-d', '--data_set', type=str,
-                    default='cifar', help='Can be either cifar|imagenet')
-parser.add_argument('-t', '--save_interval', type=int, default=20,
-                    help='Every how many epochs to write checkpoint/samples?')
-parser.add_argument('-r', '--load_params', dest='load_params', action='store_true',
-                    help='Restore training from previous model checkpoint?')
+parser.add_argument('-i', '--data_dir', type=str, default='/tmp/pxpp/data', help='Location for the dataset')
+parser.add_argument('-o', '--save_dir', type=str, default='/tmp/pxpp/save',  help='Location for parameter checkpoints and samples')
+parser.add_argument('-d', '--data_set', type=str, default='cifar', help='Can be either cifar|imagenet')
+parser.add_argument('-t', '--save_interval', type=int, default=20, help='Every how many epochs to write checkpoint/samples?')
+parser.add_argument('-r', '--load_params', dest='load_params', action='store_true', help='Restore training from previous model checkpoint?')
+
 # Model ---
-parser.add_argument('-q', '--nr_resnet', type=int, default=5,
-                    help='Number of residual blocks per stage of the model')
-parser.add_argument('-n', '--nr_filters', type=int, default=160,
-                    help='Number of filters to use across the model. Higher = larger model.')
-parser.add_argument('-m', '--nr_logistic_mix', type=int, default=10,
-                    help='Number of logistic components in the mixture. Higher = more flexible model')
-parser.add_argument('-z', '--resnet_nonlinearity', type=str, default='concat_elu',
-                    help='Which nonlinearity to use in the ResNet layers. One of "concat_elu", "elu", "relu" ')
-parser.add_argument('-c', '--class_conditional', dest='class_conditional',
-                    action='store_true', help='Condition generative model on labels?')
+parser.add_argument('-q', '--nr_resnet', type=int, default=5,  help='Number of residual blocks per stage of the model')
+parser.add_argument('-n', '--nr_filters', type=int, default=160, help='Number of filters to use across the model. Higher = larger model.')
+parser.add_argument('-m', '--nr_logistic_mix', type=int, default=10, help='Number of logistic components in the mixture. Higher = more flexible model')
+parser.add_argument('-z', '--resnet_nonlinearity', type=str, default='concat_elu', help='Which nonlinearity to use in the ResNet layers. One of "concat_elu", "elu", "relu" ')
+parser.add_argument('-c', '--class_conditional', dest='class_conditional', action='store_true', help='Condition generative model on labels?')
 
 # Optimization ---
-parser.add_argument('-l', '--learning_rate', type=float,
-                    default=0.001, help='Base learning rate')
-parser.add_argument('-e', '--lr_decay', type=float, default=0.999995,
-                    help='Learning rate decay, applied every step of the optimization')
-parser.add_argument('-b', '--batch_size', type=int, default=12,
-                    help='Batch size during training per GPU')
-parser.add_argument('-a', '--init_batch_size', type=int, default=100,
-                    help='How much data to use for data-dependent initialization.')
-parser.add_argument('-p', '--dropout_p', type=float, default=0.5,
-                    help='Dropout strength (i.e. 1 - keep_prob). 0 = No dropout, higher = more dropout.')
-parser.add_argument('-x', '--max_epochs', type=int,
-                    default=5000, help='How many epochs to run in total?')
-parser.add_argument('-g', '--nr_gpu', type=int, default=8,
-                    help='How many GPUs to distribute the training across?')
-# evaluation
-parser.add_argument('--polyak_decay', type=float, default=0.9995,
-                    help='Exponential decay rate of the sum of previous model iterates during Polyak averaging')
-# reproducibility
-parser.add_argument('-s', '--seed', type=int, default=1,
-                    help='Random seed to use')
+parser.add_argument('-l', '--learning_rate', type=float, default=0.001, help='Base learning rate')
+parser.add_argument('-e', '--lr_decay', type=float, default=0.999995, help='Learning rate decay, applied every step of the optimization')
+parser.add_argument('-b', '--batch_size', type=int, default=12, help='Batch size during training per GPU')
+parser.add_argument('-a', '--init_batch_size', type=int, default=100, help='How much data to use for data-dependent initialization.')
+parser.add_argument('-p', '--dropout_p', type=float, default=0.5, help='Dropout strength (i.e. 1 - keep_prob). 0 = No dropout, higher = more dropout.')
+parser.add_argument('-x', '--max_epochs', type=int, default=5000, help='How many epochs to run in total?')
+parser.add_argument('-g', '--nr_gpu', type=int, default=8, help='How many GPUs to distribute the training across?')
+
+# Evaluation ---
+parser.add_argument('--polyak_decay', type=float, default=0.9995, help='Exponential decay rate of the sum of previous model iterates during Polyak averaging')
+
+# Reproducibility ---
+parser.add_argument('-s', '--seed', type=int, default=1, help='Random seed to use')
+
+# Parse ---
 args = parser.parse_args()
-print('input args:\n', json.dumps(vars(args), indent=4,
-                                  separators=(',', ':')))  # pretty print args
+print('input args:\n', json.dumps(vars(args), indent=4, separators=(',', ':')))  # pretty print args
 
 # -----------------------------------------------------------------------------
 # fix random seed for reproducibility
@@ -82,19 +67,17 @@ tf.set_random_seed(args.seed)
 if args.data_set == 'imagenet' and args.class_conditional:
     raise ValueError("We currently don't have labels for the small imagenet data set")
 
-DataLoader = {'cifar': cifar10_data.DataLoader,
-              'imagenet': imagenet_data.DataLoader}[args.data_set]
-train_data = DataLoader(args.data_dir, 'train', args.batch_size * args.nr_gpu,
-                        rng=rng, shuffle=True, return_labels=args.class_conditional)
-test_data = DataLoader(args.data_dir, 'test', args.batch_size *
-                       args.nr_gpu, shuffle=False, return_labels=args.class_conditional)
+DataLoader = {'cifar': cifar10_data.DataLoader, 'imagenet': imagenet_data.DataLoader}[args.data_set]
+train_data = DataLoader(args.data_dir, 'train', args.batch_size * args.nr_gpu, rng=rng, shuffle=True,
+                        return_labels=args.class_conditional)
+test_data = DataLoader(args.data_dir, 'test', args.batch_size * args.nr_gpu, shuffle=False,
+                       return_labels=args.class_conditional)
 obs_shape = train_data.get_observation_size()  # e.g. a tuple (32,32,3)
 assert len(obs_shape) == 3, 'assumed right now'
 
 # data place holders
 x_init = tf.placeholder(tf.float32, shape=(args.init_batch_size,) + obs_shape)
-xs = [tf.placeholder(tf.float32, shape=(args.batch_size, ) + obs_shape)
-      for i in range(args.nr_gpu)]
+xs = [tf.placeholder(tf.float32, shape=(args.batch_size, ) + obs_shape) for i in range(args.nr_gpu)]
 
 # if the model is class-conditional we'll set up label placeholders +
 # one-hot encodings 'h' to condition on
@@ -102,12 +85,9 @@ if args.class_conditional:
     num_labels = train_data.get_num_labels()
     y_init = tf.placeholder(tf.int32, shape=(args.init_batch_size,))
     h_init = tf.one_hot(y_init, num_labels)
-    y_sample = np.split(
-        np.mod(np.arange(args.batch_size * args.nr_gpu), num_labels), args.nr_gpu)
-    h_sample = [tf.one_hot(tf.Variable(
-        y_sample[i], trainable=False), num_labels) for i in range(args.nr_gpu)]
-    ys = [tf.placeholder(tf.int32, shape=(args.batch_size,))
-          for i in range(args.nr_gpu)]
+    y_sample = np.split(np.mod(np.arange(args.batch_size * args.nr_gpu), num_labels), args.nr_gpu)
+    h_sample = [tf.one_hot(tf.Variable(y_sample[i], trainable=False), num_labels) for i in range(args.nr_gpu)]
+    ys = [tf.placeholder(tf.int32, shape=(args.batch_size,)) for i in range(args.nr_gpu)]
     hs = [tf.one_hot(ys[i], num_labels) for i in range(args.nr_gpu)]
 else:
     h_init = None
@@ -120,8 +100,7 @@ model_opt = {'nr_resnet': args.nr_resnet, 'nr_filters': args.nr_filters,
 model = tf.make_template('model', model_spec)
 
 # run once for data dependent initialization of parameters
-gen_par = model(x_init, h_init, init=True,
-                dropout_p=args.dropout_p, **model_opt)
+gen_par = model(x_init, h_init, init=True, dropout_p=args.dropout_p, **model_opt)
 
 # keep track of moving average
 all_params = tf.trainable_variables()
@@ -135,8 +114,7 @@ loss_gen_test = []
 for i in range(args.nr_gpu):
     with tf.device('/gpu:%d' % i):
         # train
-        gen_par = model(xs[i], hs[i], ema=None,
-                        dropout_p=args.dropout_p, **model_opt)
+        gen_par = model(xs[i], hs[i], ema=None, dropout_p=args.dropout_p, **model_opt)
         loss_gen.append(nn.discretized_mix_logistic_loss(xs[i], gen_par))
         # gradients
         grads.append(tf.gradients(loss_gen[i], all_params))
@@ -157,10 +135,8 @@ with tf.device('/gpu:0'):
         all_params, grads[0], lr=tf_lr, mom1=0.95, mom2=0.9995), maintain_averages_op)
 
 # convert loss to bits/dim
-bits_per_dim = loss_gen[
-    0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
-bits_per_dim_test = loss_gen_test[
-    0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
+bits_per_dim = loss_gen[0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
+bits_per_dim_test = loss_gen_test[0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
 
 # sample from the model
 new_x_gen = []
@@ -209,7 +185,8 @@ def make_feed_dict(data, init=False):
             feed_dict.update({ys[i]: y[i] for i in range(args.nr_gpu)})
     return feed_dict
 
-# //////////// perform training //////////////
+# Perform Training ------------
+
 if not os.path.exists(args.save_dir):
     os.makedirs(args.save_dir)
 print('starting training')
@@ -218,8 +195,6 @@ lr = args.learning_rate
 with tf.Session() as sess:
     for epoch in range(args.max_epochs):
         begin = time.time()
-
-        # init
         if epoch == 0:
             # manually retrieve exactly init_batch_size examples
             feed_dict = make_feed_dict(
@@ -258,7 +233,6 @@ with tf.Session() as sess:
         sys.stdout.flush()
 
         if epoch % args.save_interval == 0:
-
             # generate samples from the model
             sample_x = sample_from_model(sess)
             img_tile = plotting.img_tile(sample_x[:int(np.floor(np.sqrt(
