@@ -327,7 +327,8 @@ def nin(x, num_units, **kwargs):
 
 
 @add_arg_scope
-def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu, conv=conv2d, init=False, counters={}, ema=None,
+def gated_resnet(x, a=None, h=None, nonlinearity=concat_elu,
+                 conv=conv2d, init=False, counters={}, ema=None,
                  dropout_p=0., **kwargs):
     xs = int_shape(x)
     num_filters = xs[-1]
